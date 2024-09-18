@@ -4,12 +4,76 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Form Post</title>
+    <!-- Include Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Include AlpineJS for handling modal -->
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
 <body class="bg-gray-100">
-    <div class="max-w-4xl mx-auto mt-10">
-        <div class="bg-white shadow-md rounded-lg p-6">
-            <h2 class="text-2xl font-bold mb-6">Create Post</h2>
+    <div class="max-w-4xl mx-auto mt-10" x-data="{ open: false }">
+        <div class="bg-white shadow-md rounded-lg p-8">
+
+            <div class="flex flex-row justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold">Create Post</h2>
+
+                <!-- Button to Open Modal -->
+                <button type="button" @click="open = true" class="w-50 bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded-lg text-sm">
+                    Add Category
+                </button>
+            </div>
+
+            <!-- Modal (hidden by default) -->
+            <div x-show="open" x-transition:enter="transition ease-out duration-300"
+                x-transition:enter-start="opacity-0 scale-90" x-transition:enter-end="opacity-100 scale-100"
+                x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 scale-100"
+                x-transition:leave-end="opacity-0 scale-90"
+                class="fixed inset-0 z-50 flex items-center justify-center bg-gray-500 bg-opacity-50">
+
+                <div @click.away="open = false" class="bg-white w-full max-w-md p-5 rounded-lg shadow-lg">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-semibold">Add New Category</h3>
+                        <button @click="open = false" class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8">
+                            <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
+                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
+                            </svg>
+                            <span class="sr-only">Close modal</span>
+                        </button>
+                    </div>
+
+                    <!-- Modal Body -->
+                    <form action="{{ route('categories.store') }}" method="POST" class="space-y-4">
+                        @csrf
+                        <div class="col-span-2">
+                            <label for="category_name" class="block mb-2 text-sm font-medium text-gray-900">Name</label>
+                            <input type="text" name="category_name" id="category_name" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="Type category name" required>
+                        </div>
+                        {{-- <div class="col-span-2 sm:col-span-1">
+                            <label for="price" class="block mb-2 text-sm font-medium text-gray-900">Price</label>
+                            <input type="number" name="price" id="price" class="w-full px-3 py-2 border rounded-lg" placeholder="$2999" required>
+                        </div>
+                        <div class="col-span-2 sm:col-span-1">
+                            <label for="category" class="block mb-2 text-sm font-medium text-gray-900">Category</label>
+                            <select id="category" class="w-full px-3 py-2 border rounded-lg">
+                                <option selected>Select category</option>
+                                <option value="TV">TV/Monitors</option>
+                                <option value="PC">PC</option>
+                            </select>
+                        </div> --}}
+                        <div class="col-span-2">
+                            <label for="category_description" class="block mb-2 text-sm font-medium text-gray-900">Category Description</label>
+                            <textarea id="category_description" name="category_description" rows="4" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="Write category description here"></textarea>
+                        </div>
+
+                        <button type="submit" @click="open = false" class="w-full bg-blue-600 text-white py-2 rounded-lg">Add Category</button>
+                    </form>
+                </div>
+            </div>
+
+            @if (session('success'))
+                <div class="alert alert-success mb-6">
+                    {{ session('success') }}
+                </div>
+            @endif
 
             <!-- Form Start -->
             <form action="{{ route('posts.store') }}" method="POST" class="space-y-4">
@@ -37,24 +101,18 @@
                         class="mt-1 block w-full pl-3 pr-10 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
                         <option value="">Select a category</option>
                         <!-- Dynamic categories here -->
-                        <option value="1">Category 1</option>
-                        <option value="2">Category 2</option>
-                        <!-- Add more categories -->
+                        @foreach ($categories as $category)
+                            <option value="{{ $category->id }}">{{ $category->category_name }}</option>
+                        @endforeach
                     </select>
                 </div>
 
                 <!-- Action Buttons -->
-                <div class="flex justify-between items-center mt-6">
+                <div class="mt-20">
                     <!-- Submit Button -->
                     <button type="submit"
                         class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                         Submit
-                    </button>
-
-                    <!-- Delete Button -->
-                    <button type="button"
-                        class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
-                        Delete
                     </button>
                 </div>
 
@@ -64,3 +122,5 @@
         </div>
     </div>
 </body>
+</html>
+

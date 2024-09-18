@@ -2,20 +2,31 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Posts;
+use App\Models\Category;
+use App\Models\Post;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class PostController extends Controller
 {
+
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        $posts = Posts::all();
 
-        return view('posts.index', compact('posts'));
+        // Fetching all posts
+        $posts = Post::all();
+
+        // Fetching category names and count of posts for each category
+        $categories = Category::withCount('posts')->get();
+
+        // Prepare data for the chart
+        $categoryNames = $categories->pluck('category_name');
+        $postCounts = $categories->pluck('posts_count');
+
+        return view('posts.index', compact('posts', 'categoryNames', 'postCounts'));
     }
 
     /**
@@ -24,7 +35,9 @@ class PostController extends Controller
     public function create()
     {
         //
-        return view('posts.create');
+        $categories = Category::all();
+
+        return view('posts.create', compact('categories'));
     }
 
     /**
@@ -40,7 +53,7 @@ class PostController extends Controller
         ]);
 
         // Insert the data using the Post model
-        Posts::create($validated);
+        Post::create($validated);
 
         // Redirect or return response after insertion
         return to_route('posts.index')->with('success', 'Post created successfully!');
@@ -49,19 +62,16 @@ class PostController extends Controller
     /**
      * Display the specified resource.
      */
+    // public function show(Post $post)
     public function show(string $id)
     {
         //
-        // Retrieve the post where id matches the provided $id
-        $post = Posts::where('id', $id)->first();
+        $post = Post::find($id);
 
-        // Check if the post exists
-        if (!$post) {
-            return redirect()->back()->with('error', 'Post not found.');
-        }
+        $categories = Category::all();
 
         // Return a view with the post data
-        return view('posts.edit', compact('post'));
+        return view('posts.show', compact('post', 'categories'));
     }
 
     /**
@@ -77,7 +87,7 @@ class PostController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        $post = Posts::find($id);
+        $post = Post::find($id);
         // Validate the request data
         $validated = $request->validate([
             'title' => 'required|string|max:255',
@@ -98,10 +108,10 @@ class PostController extends Controller
     public function destroy(string $id)
     {
         //
-        $deleted = Posts::where('id', $id)->delete();
+        $deleted = Post::where('id', $id)->delete();
 
         if ($deleted) {
-            return redirect()->back()->with('success', 'Post deleted successfully!');
+            return redirect()->route('posts.index')->with('success', 'Post deleted successfully!');
         } else {
             return redirect()->back()->with('error', 'Post not found or could not be deleted.');
         }
