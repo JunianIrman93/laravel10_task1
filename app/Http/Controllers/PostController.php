@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use App\Models\Post;
+use App\Models\Tag;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -16,8 +17,8 @@ class PostController extends Controller
     public function index()
     {
 
-        // Fetching all posts
-        $posts = Post::all();
+        // Fetching all posts along with related tags and category
+        $posts = Post::with('tags', 'category')->get();
 
         // Fetching category names and count of posts for each category
         $categories = Category::withCount('posts')->get();
@@ -34,10 +35,12 @@ class PostController extends Controller
      */
     public function create()
     {
-        //
-        $categories = Category::all();
 
-        return view('posts.create', compact('categories'));
+        $categories = Category::all(); // Fetching all categories
+
+        $allTags = Tag::all(); // Fetching all tags
+
+        return view('posts.create', compact('categories', 'allTags'));
     }
 
     /**
@@ -50,10 +53,23 @@ class PostController extends Controller
             'title' => 'required|string|max:255',
             'content' => 'required|string',
             'category_id' => 'required|string',
+            'tags' => 'array',
+            'tags.*' => 'string|max:255',
         ]);
 
         // Insert the data using the Post model
-        Post::create($validated);
+        $post = Post::create($validated);
+
+        // Proses tags
+        if (isset($validated['tags'])) {
+            $tagIds = [];
+            foreach ($validated['tags'] as $tagName) {
+                $tag = Tag::firstOrCreate(['name' => $tagName]);
+                $tagIds[] = $tag->id;
+            }
+            // Attach tags ke post
+            $post->tags()->attach($tagIds);
+        }
 
         // Redirect or return response after insertion
         return to_route('posts.index')->with('success', 'Post created successfully!');
@@ -66,7 +82,7 @@ class PostController extends Controller
     public function show(string $id)
     {
         //
-        $post = Post::find($id);
+        $post = Post::with('tags', 'category')->find($id);
 
         $categories = Category::all();
 
@@ -82,25 +98,60 @@ class PostController extends Controller
         //
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, string $id)
     {
-        $post = Post::find($id);
-        // Validate the request data
+        // Validasi data
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'content' => 'required|string',
-            'category_id' => 'required|string',
+            'category_id' => 'required|integer|exists:categories,id',
+            'tags' => 'nullable|array',
+            'tags.*' => 'string|max:255', // Mengizinkan ID (sebagai string) atau nama tag
         ]);
 
-        // Update the data using the Post model
-        $post->update($validated);
+        // Fetch the post
+        $post = Post::findOrFail($id);
 
-        // Redirect or return response after insertion
+        // Update the post data
+        $post->update([
+            'title' => $validated['title'],
+            'content' => $validated['content'],
+            'category_id' => $validated['category_id'],
+        ]);
+
+        // Handle tags
+        if (isset($validated['tags'])) {
+            $tagIds = [];
+
+            foreach ($validated['tags'] as $tagInput) {
+
+                if (is_numeric($tagInput)) {
+                    // Jika input adalah ID tag yang sudah ada
+                    $tag = Tag::find($tagInput);
+                    if ($tag) {
+                        $tagIds[] = $tag->id;
+                    } else {
+                        $newTag = Tag::firstOrCreate(['name' => trim($tagInput)]);
+                        $tagIds[] = $newTag->id;
+                    }
+                } else {
+                    // Jika input adalah nama tag baru
+                    $tag = Tag::firstOrCreate(['name' => trim($tagInput)]);
+                    $tagIds[] = $tag->id;
+                }
+            }
+
+            // Sinkronkan tags ke post
+            $post->tags()->sync($tagIds);
+        } else {
+            // Jika tidak ada tags, detach semua tags yang ada
+            $post->tags()->detach();
+        }
+
+        // Redirect setelah pembaruan
         return to_route('posts.index')->with('success', 'Post updated successfully!');
     }
+
 
     /**
      * Remove the specified resource from storage.

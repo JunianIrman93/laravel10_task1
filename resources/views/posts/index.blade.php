@@ -37,6 +37,7 @@
                         <th class="py-2 px-4 border-b border-gray-200 text-left text-sm font-medium text-gray-600">Title</th>
                         <th class="py-2 px-4 border-b border-gray-200 text-left text-sm font-medium text-gray-600">Content</th>
                         <th class="py-2 px-4 border-b border-gray-200 text-left text-sm font-medium text-gray-600">Category</th>
+                        <th class="py-2 px-4 border-b border-gray-200 text-left text-sm font-medium text-gray-600">Tags</th>
                         <th class="py-2 px-4 border-b border-gray-200 text-left text-sm font-medium text-gray-600">Created At</th>
                         <th class="py-2 px-4 border-b border-gray-200 text-left text-sm font-medium text-gray-600">Updated At</th>
                         <th class="py-2 px-4 border-b border-gray-200 text-right text-sm font-medium text-gray-600">Actions</th>
@@ -50,6 +51,11 @@
                             <td class="py-2 px-4 border-b border-gray-200 text-sm text-gray-700">{{ $post->title }}</td>
                             <td class="py-2 px-4 border-b border-gray-200 text-sm text-gray-700">{{ $post->content }}</td>
                             <td class="py-2 px-4 border-b border-gray-200 text-sm text-gray-700">{{ $post->category->category_name }}</td>
+                            <td class="py-2 px-4 border-b border-gray-200 text-sm text-gray-700">
+                                @foreach ($post->tags as $tag)
+                                    <span>{{ $tag->name }}</span>@if (!$loop->last), @endif
+                                @endforeach
+                            </td>
                             <td class="py-2 px-4 border-b border-gray-200 text-sm text-gray-700">{{ $post->created_at }}</td>
                             <td class="py-2 px-4 border-b border-gray-200 text-sm text-gray-700">{{ $post->updated_at }}</td>
                             <td class="flex flex-row justify-end py-2 px-4 border-b border-gray-200 text-sm text-right">

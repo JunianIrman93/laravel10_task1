@@ -8,6 +8,10 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Alpine.js for Modal Handling -->
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <!-- Include Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <!-- Optional: Include Select2 Tailwind Theme (Jika Ada) -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2-tailwind.min.css" rel="stylesheet" />
 </head>
 <body class="bg-gray-100" >
     <div class="max-w-4xl mx-auto mt-10">
@@ -44,6 +48,23 @@
                             <option value="{{ $category->id }}" {{ $category->id == $post->category->id ? 'selected' : '' }}>{{ $category->id == $post->category->id ? $post->category->category_name : $category->category_name }}</option>
                         @endforeach
                     </select>
+                </div>
+
+                <!-- Tags Select -->
+                <div>
+                    <label for="tags" class="block text-sm font-medium text-gray-700">Tags</label>
+                    <select id="tags" name="tags[]" multiple="multiple"
+                        class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                        @foreach($post->tags as $tag)
+                            <option value="{{ $tag->id }}" {{ $post->tags->contains($tag->id) ? 'selected' : '' }}>
+                                {{ $tag->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                    <small class="text-gray-500 text-sm">Select or type new tags.</small>
+                    @error('tags')
+                        <span class="text-red-500 text-sm">{{ $message }}</span>
+                    @enderror
                 </div>
 
                 <!-- Action Buttons -->
@@ -110,6 +131,37 @@
 
         </div>
     </div>
+
+        <!-- Include jQuery (Select2 dependency) -->
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+        <!-- Include Select2 JS -->
+        <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+        <!-- Select2 Initialization Script -->
+        <script>
+            $(document).ready(function() {
+                $('#tags').select2({
+                    tags: true,
+                    tokenSeparators: [',', ' '],
+                    placeholder: "Select or type tags",
+                    allowClear: true,
+                    width: '100%',
+                    dropdownParent: $('body'), // Prevent Select2 from being hidden behind modal
+                    templateResult: formatTag,
+                    templateSelection: formatTagSelection
+                });
+
+                // Optional: Customize tag appearance
+                function formatTag(tag) {
+                    return $('<span>' + tag.text + '</span>');
+                }
+
+                function formatTagSelection(tag) {
+                    return $('<span>' + tag.text + '</span>');
+                }
+            });
+        </script>
+
 </body> --}}
 
 <!DOCTYPE html>
@@ -122,6 +174,11 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Alpine.js for Modal Handling -->
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <!-- Include Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <!-- Optional: Include Select2 Tailwind Theme (Jika Ada) -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2-tailwind.min.css" rel="stylesheet" />
+
 </head>
 <body class="bg-gray-100">
     <div class="max-w-4xl mx-auto mt-10">
@@ -131,7 +188,7 @@
             <!-- Form Start -->
             <form action="{{ route('posts.update', $post->id) }}" method="POST" class="space-y-4">
                 @csrf
-                @method('PUT')
+                @method('POST')
                 <!-- Title Input -->
                 <div>
                     <label for="title" class="block text-sm font-medium text-gray-700">Post Title</label>
@@ -162,13 +219,30 @@
                     </select>
                 </div>
 
+                <!-- Tags Select -->
+                <div>
+                    <label for="tags" class="block text-sm font-medium text-gray-700">Tags</label>
+                    <select id="tags" name="tags[]" multiple="multiple"
+                        class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                        @foreach($post->tags as $tag)
+                            <option value="{{ $tag->id }}" {{ $post->tags->contains($tag->id) ? 'selected' : '' }}>
+                                {{ $tag->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                    <small class="text-gray-500 text-sm">Select or type new tags.</small>
+                    @error('tags')
+                        <span class="text-red-500 text-sm">{{ $message }}</span>
+                    @enderror
+                </div>
                 <!-- Action Buttons -->
                 <div class="flex flex-row justify-between items-center mt-6" x-data="{ openModal: false }">
                     <!-- Submit Button -->
                     <button type="submit"
-                        class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                        Submit
-                    </button>
+                    class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    Submit
+                </button>
+            </form>
 
                     <!-- Delete Button -->
                     <button @click="openModal = true" type="button"
@@ -211,10 +285,40 @@
                         </div>
                     </div>
                 </div>
-            </form>
             <!-- Form End -->
 
         </div>
     </div>
+
+
+    <!-- Include jQuery (Select2 dependency) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Include Select2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <!-- Select2 Initialization Script -->
+    <script>
+        $(document).ready(function() {
+            $('#tags').select2({
+                tags: true,
+                tokenSeparators: [',', ' '],
+                placeholder: "Select or type tags",
+                allowClear: true,
+                width: '100%',
+                dropdownParent: $('body'), // Prevent Select2 from being hidden behind modal
+                templateResult: formatTag,
+                templateSelection: formatTagSelection
+            });
+
+            // Optional: Customize tag appearance
+            function formatTag(tag) {
+                return $('<span>' + tag.text + '</span>');
+            }
+
+            function formatTagSelection(tag) {
+                return $('<span>' + tag.text + '</span>');
+            }
+        });
+    </script>
 </body>
 </html>
